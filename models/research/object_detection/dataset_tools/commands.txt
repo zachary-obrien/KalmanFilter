@@ -1,0 +1,57 @@
+python3 train.py --logtostderr --train_dir=training/ --pipeline_config_path=training/ssd_inception_v2_coco.config
+
+# For example
+# python3 generate_tfrecord.py --label=target --csv_input=/home/zac/tensorflow/models/images/train/train_labels.csv --output_path=/home/zac/tensorflow/models/annotations/train.record --img_path=/home/zac/tensorflow/models/images/train
+
+# python3 generate_tfrecord.py --label=target --csv_input=/home/zac/tensorflow/models/images/test/test_labels.csv --output_path=/home/zac/tensorflow/models/annotations/test.record --img_path=/home/zac/tensorflow/models/images/test
+
+# python generate_tfrecord.py --label=ship --csv_input=C:\Users\sglvladi\Documents\TensorFlow\workspace\training_demo\annotations\test_labels.csv --output_path=C:\Users\sglvladi\Documents\TensorFlow\workspace\training_demo\annotations\test.record --img_path=C:\Users\sglvladi\Documents\TensorFlow\workspace\training_demo\images\test
+
+
+
+python3 research/object_detection/dataset_tools/create_pet_tf_record.py --data_dir=/home/zac/tensorflow/models --label_map_path=/home/zac/tensorflow/models/annotations/label_map.pbtxt --faces_only=False --output_dir=/home/zac/tensorflow/models/research/output --mask_type=numerical
+
+
+Example usage:
+    python create_coco_tf_record.py --logtostderr \
+      --train_image_dir="${TRAIN_IMAGE_DIR}" \
+      --val_image_dir="${VAL_IMAGE_DIR}" \
+      --test_image_dir="${TEST_IMAGE_DIR}" \
+      --train_annotations_file="${TRAIN_ANNOTATIONS_FILE}" \
+      --val_annotations_file="${VAL_ANNOTATIONS_FILE}" \
+      --testdev_annotations_file="${TESTDEV_ANNOTATIONS_FILE}" \
+      --output_dir="${OUTPUT_DIR}"
+
+
+tf.flags.DEFINE_boolean('include_masks', False,
+                        'Whether to include instance segmentations masks '
+                        '(PNG encoded) in the result. default: False.')
+tf.flags.DEFINE_string('train_image_dir', '',
+                       'Training image directory.')
+tf.flags.DEFINE_string('val_image_dir', '',
+                       'Validation image directory.')
+tf.flags.DEFINE_string('test_image_dir', '',
+                       'Test image directory.')
+tf.flags.DEFINE_string('train_annotations_file', '',
+                       'Training annotations JSON file.')
+tf.flags.DEFINE_string('val_annotations_file', '',
+                       'Validation annotations JSON file.')
+tf.flags.DEFINE_string('testdev_annotations_file', '',
+                       'Test-dev annotations JSON file.')
+tf.flags.DEFINE_string('output_dir', '/tmp/', 'Output data directory.')
+
+
+
+
+flags.DEFINE_string('data_dir', '', 'Root directory to raw pet dataset.')
+flags.DEFINE_string('output_dir', '', 'Path to directory to output TFRecords.')
+flags.DEFINE_string('label_map_path', 'data/label_map.pbtxt',
+                    'Path to label map proto')
+flags.DEFINE_boolean('faces_only', True, 'If True, generates bounding boxes '
+                     'for pet faces.  Otherwise generates bounding boxes (as '
+                     'well as segmentations for full pet bodies).  Note that '
+                     'in the latter case, the resulting files are much larger.')
+flags.DEFINE_string('mask_type', 'png', 'How to represent instance '
+                    'segmentation masks. Options are "png" or "numerical".')
+flags.DEFINE_integer('num_shards', 10, 'Number of TFRecord shards')
+

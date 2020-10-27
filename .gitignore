@@ -127,3 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Custom
+mask_rcnn_inception_resnet_v2_1024x1024_coco17_gpu-8/

@@ -1,0 +1,91 @@
+sudo apt-get install git
+sudo apt-get install vim
+sudo apt-get install python3-pip
+sudo apt-get upgrade
+
+sudo pip3 install ––upgrade pip
+pip install testresources
+EITHER:
+  pip3 install setuptools
+  pip3 install --upgrade setuptools
+
+pip install keras
+#tensorflow-gpu is automatically included with tensorflow2
+pip install tensorflow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#TODO: TensorRT install. Don't worry a bout this now
+#TODO: CUPTI install. I don't know if this is needed or not
+
+Go To https://developer.nvidia.com/rdp/cudnn-archive
+Download cuDNN v7.6.5 for CUDA 10.1
+Download "cuDNN Library for Linux" 
+
+sudo cp cuda/include/cudnn.h /usr/lib/cuda/include/
+sudo cp cuda/lib64/libcudnn* /usr/lib/cuda/lib64/
+sudo chmod a+r /usr/lib/cuda/include/cudnn.h /usr/lib/cuda/lib64/libcudnn*
+
+To Check It worked go to python and run:
+  import tensorflow as tf
+  tf.config.list_physical_devices('GPU')
+It should process without errors
+
+
+pip install opencv-python
+pip install scipy
+
+
+
+
+
+
+
+
+
+
+
+
+
+git clone git@github.com:zachary-obrien/KalmanFilter.git
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

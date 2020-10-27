@@ -1,0 +1,72 @@
+https://www.tensorflow.org/install/gpu
+
+/usr/bin/python3.7 -m pip install --upgrade pip
+
+cd models/research
+# Compile protos.
+protoc object_detection/protos/*.proto --python_out=.
+# Install TensorFlow Object Detection API.
+cp object_detection/packages/tf2/setup.py .
+python -m pip install --use-feature=2020-resolver .
+
+git clone https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2.md
+
+sudo apt-get --purge remove "*cublas*" "cuda*" "nsight*" 
+sudo apt-get --purge remove "*nvidia*"
+sudo rm -rf /usr/local/cuda*
+sudo vim /etc/apt/sources.list
+
+
+sudo apt update
+sudo add-apt-repository ppa:graphics-drivers
+
+sudo apt-key adv --fetch-keys  http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+
+sudo bash -c 'echo "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/cuda.list'
+
+sudo bash -c 'echo "deb http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/cuda_learn.list'
+
+https://www.tensorflow.org/install/gpu
+
+# Add NVIDIA package repositories
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.1.243-1_amd64.deb
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+sudo dpkg -i cuda-repo-ubuntu1804_10.1.243-1_amd64.deb
+sudo apt-get update
+wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
+sudo apt install ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
+sudo apt-get update
+
+# Install NVIDIA driver
+sudo apt-get install --no-install-recommends nvidia-driver-450
+# Reboot. Check that GPUs are visible using the command: nvidia-smi
+
+# Install development and runtime libraries (~4GB)
+sudo apt-get install --no-install-recommends \
+    cuda-10-1 \
+    libcudnn7=7.6.5.32-1+cuda10.1  \
+    libcudnn7-dev=7.6.5.32-1+cuda10.1
+
+
+# Install TensorRT. Requires that libcudnn7 is installed above.
+sudo apt-get install -y --no-install-recommends libnvinfer6=6.0.1-1+cuda10.1 \
+    libnvinfer-dev=6.0.1-1+cuda10.1 \
+    libnvinfer-plugin6=6.0.1-1+cuda10.1
+
+
+
+
+sudo apt-get install cuda-10-1
+
+sudo apt-get install libcudnn7
+
+pip install tensorflow-gpu
+
+pip install tensorflow-IO
+
+
+
+vim "~/.local/lib/python3.7/site-packages/object_detection/utils/config_util.py"
+
+vim "~/.local/lib/python3.7/site-packages/object_detection/utils/label_map_util.py"
+

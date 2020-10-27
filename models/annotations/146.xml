@@ -1,0 +1,26 @@
+<annotation>
+	<folder>images</folder>
+	<filename>146.jpg</filename>
+	<path>/home/zac/tensorflow/models/images/146.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>1920</width>
+		<height>1080</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>target</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>952</xmin>
+			<ymin>501</ymin>
+			<xmax>1022</xmax>
+			<ymax>556</ymax>
+		</bndbox>
+	</object>
+</annotation>
