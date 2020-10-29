@@ -214,14 +214,34 @@ input_tensor = tf.convert_to_tensor(img2)
 
 input_tensor2 = input_tensor[tf.newaxis, ...]
 print("Model 1 with input_tensor2")
-# try:
+
 detections = new_model1(input_tensor2)
-print("detections")
-print(detections)
-print(detections.items())
+print("Predictions complete")
 num_detections = int(detections.pop('num_detections'))
-print("num_detections")
-print(num_detections)
+
+for key, value in detections.items():
+    detections[key] = value[0]
+
+image_np_with_detections = cv2.imread(file_name)
+(h, w) = image_np_with_detections.shape[:2]
+
+for index, box in enumerate(detections['detection_boxes']):
+    score = detections['detection_scores'][index].numpy()
+    if score > THRESHOLD:
+        startX = int(detections['detection_boxes'][index][0] * w)
+        startY = int(detections['detection_boxes'][index][1] * h)
+        endX = int(detections['detection_boxes'][index][2] * w)
+        endY = int(detections['detection_boxes'][index][3] * h)
+        y = startY - 10 if startY - 10 > 10 else startY + 10
+        detection_class = str(detections['detection_classes'][index].numpy())
+        cv2.putText(image_np_with_detections, detection_class, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
+        cv2.rectangle(image_np_with_detections, (startX, startY), (endX, endY), (0, 255, 0), 2)
+
+cv2.imshow("Output", image_np_with_detections)
+cv2.waitKey(0)
+
+
+
 #Detections object has
     # proposal_boxes_normalized
     # detection_anchor_indices
@@ -245,31 +265,3 @@ print(num_detections)
     # image_shape
     # anchors
     # detection_scores
-
-
-# print(detections.items())
-for key, value in detections.items():
-    print(key)
-    detections[key] = value[0]
-
-image_np_with_detections = cv2.imread(file_name)
-(h, w) = image_np_with_detections.shape[:2]
-for index, box in enumerate(detections['detection_boxes']):
-    startX = int(detections['detection_boxes'][0] * w)
-    startY = int(detections['detection_boxes'][1] * h)
-    endX = int(detections['detection_boxes'][2] * w)
-    endY = int(detections['detection_boxes'][3] * h)
-    y = startY - 10 if startY - 10 > 10 else startY + 10
-    cv2.putText(image_np_with_detections, detections['detection_classes'][index], (startX, y), cv2.FONT_HERSHEY_SIMPLEX,
-                0.65, (0, 255, 0), 2)
-    cv2.rectangle(image_np_with_detections, (startX, startY), (endX, endY),
-                  (0, 255, 0), 2)
-    cv2.imshow("Output", image_np_with_detections)
-    cv2.waitKey(0)
-
-# except Exception as e:
-#     print("ERROR")
-#     print(e)
-
-
-
