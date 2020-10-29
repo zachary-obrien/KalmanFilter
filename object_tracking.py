@@ -255,10 +255,10 @@ try:
     image_np_with_detections = cv2.imread(file_name)
     (h, w) = image_np_with_detections.shape[:2]
     for index, box in enumerate(detections['detection_boxes']):
-        startX = int(startX * w)
-        startY = int(startY * h)
-        endX = int(endX * w)
-        endY = int(endY * h)
+        startX = int(detections['detection_boxes'][0] * w)
+        startY = int(detections['detection_boxes'][1] * h)
+        endX = int(detections['detection_boxes'][2] * w)
+        endY = int(detections['detection_boxes'][3] * h)
         y = startY - 10 if startY - 10 > 10 else startY + 10
         cv2.putText(image_np_with_detections, detections['detection_classes'][index], (startX, y), cv2.FONT_HERSHEY_SIMPLEX,
                     0.65, (0, 255, 0), 2)
