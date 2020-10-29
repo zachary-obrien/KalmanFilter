@@ -214,62 +214,62 @@ input_tensor = tf.convert_to_tensor(img2)
 
 input_tensor2 = input_tensor[tf.newaxis, ...]
 print("Model 1 with input_tensor2")
-try:
-    detections = new_model1(input_tensor2)
-    print("detections")
-    print(detections)
-    print(detections.items())
-    num_detections = int(detections.pop('num_detections'))
-    print("num_detections")
-    print(num_detections)
-    #Detections object has
-        # proposal_boxes_normalized
-        # detection_anchor_indices
-        # raw_detection_boxes
-        # class_predictions_with_background
-        # box_classifier_features
-        # proposal_boxes
-        # rpn_features_to_crop
-        # rpn_objectness_predictions_with_background
-        # mask_predictions
-        # detection_boxes
-        # detection_masks
-        # refined_box_encodings
-        # final_anchors
-        # rpn_box_predictor_features
-        # raw_detection_scores
-        # detection_classes
-        # rpn_box_encodings
-        # num_proposals
-        # detection_multiclass_scores
-        # image_shape
-        # anchors
-        # detection_scores
+# try:
+detections = new_model1(input_tensor2)
+print("detections")
+print(detections)
+print(detections.items())
+num_detections = int(detections.pop('num_detections'))
+print("num_detections")
+print(num_detections)
+#Detections object has
+    # proposal_boxes_normalized
+    # detection_anchor_indices
+    # raw_detection_boxes
+    # class_predictions_with_background
+    # box_classifier_features
+    # proposal_boxes
+    # rpn_features_to_crop
+    # rpn_objectness_predictions_with_background
+    # mask_predictions
+    # detection_boxes
+    # detection_masks
+    # refined_box_encodings
+    # final_anchors
+    # rpn_box_predictor_features
+    # raw_detection_scores
+    # detection_classes
+    # rpn_box_encodings
+    # num_proposals
+    # detection_multiclass_scores
+    # image_shape
+    # anchors
+    # detection_scores
 
 
-    # print(detections.items())
-    for key, value in detections.items():
-        print(key)
-        detections[key] = value[0]
+# print(detections.items())
+for key, value in detections.items():
+    print(key)
+    detections[key] = value[0]
 
-    image_np_with_detections = cv2.imread(file_name)
-    (h, w) = image_np_with_detections.shape[:2]
-    for index, box in enumerate(detections['detection_boxes']):
-        startX = int(detections['detection_boxes'][0] * w)
-        startY = int(detections['detection_boxes'][1] * h)
-        endX = int(detections['detection_boxes'][2] * w)
-        endY = int(detections['detection_boxes'][3] * h)
-        y = startY - 10 if startY - 10 > 10 else startY + 10
-        cv2.putText(image_np_with_detections, detections['detection_classes'][index], (startX, y), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.65, (0, 255, 0), 2)
-        cv2.rectangle(image_np_with_detections, (startX, startY), (endX, endY),
-                      (0, 255, 0), 2)
-        cv2.imshow("Output", image_np_with_detections)
-        cv2.waitKey(0)
+image_np_with_detections = cv2.imread(file_name)
+(h, w) = image_np_with_detections.shape[:2]
+for index, box in enumerate(detections['detection_boxes']):
+    startX = int(detections['detection_boxes'][0] * w)
+    startY = int(detections['detection_boxes'][1] * h)
+    endX = int(detections['detection_boxes'][2] * w)
+    endY = int(detections['detection_boxes'][3] * h)
+    y = startY - 10 if startY - 10 > 10 else startY + 10
+    cv2.putText(image_np_with_detections, detections['detection_classes'][index], (startX, y), cv2.FONT_HERSHEY_SIMPLEX,
+                0.65, (0, 255, 0), 2)
+    cv2.rectangle(image_np_with_detections, (startX, startY), (endX, endY),
+                  (0, 255, 0), 2)
+    cv2.imshow("Output", image_np_with_detections)
+    cv2.waitKey(0)
 
-except Exception as e:
-    print("ERROR")
-    print(e)
+# except Exception as e:
+#     print("ERROR")
+#     print(e)
 
 
 
