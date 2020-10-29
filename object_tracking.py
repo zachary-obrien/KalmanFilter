@@ -12,7 +12,6 @@ import helpers
 import time
 import keras
 from PIL import Image
-import sys
 
 
 tf.get_logger().setLevel('ERROR')           # Suppress TensorFlow logging (2)
@@ -209,33 +208,9 @@ def detect (current_image):
     print(detections)
 
 file_name = "person_test_images/Lake-Calhoun_MAIN_2.jpg"
-img = keras.preprocessing.image.load_img(file_name)
-img = keras.preprocessing.image.img_to_array(img)
-img = img.astype('float32')
-img /= 255.0
-img = keras.backend.expand_dims(img)
 
-img2 = np.array(Image.open("person_test_images/Lake-Calhoun_MAIN_2.jpg"))
+img2 = np.array(Image.open(file_name))
 input_tensor = tf.convert_to_tensor(img2)
-# print("Model 1 with img")
-# try:
-#     new_model1(img)
-# except Exception as e: print(e)
-#
-# print("Model 1 with img")
-# try:
-#     new_model2(img)
-# except Exception as e: print(e)
-#
-# print("Model 1 with input_tensor")
-# try:
-#     new_model1(input_tensor)
-# except Exception as e: print(e)
-#
-# print("Model 2 with input_tensor")
-# try:
-#     new_model2(input_tensor)
-# except Exception as e: print(e)
 
 input_tensor2 = input_tensor[tf.newaxis, ...]
 print("Model 1 with input_tensor2")
@@ -247,32 +222,50 @@ try:
     num_detections = int(detections.pop('num_detections'))
     print("num_detections")
     print(num_detections)
-    if detections['image_tensor']:
-        print("has image tensor")
-    if detections['detection_boxes']:
-        print("has detection_boxes")
-    if detections['detection_scores']:
-        print("has detection_scores")
-    if detections['detection_classes']:
-        print("has detection_classes")
-    # image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
-    # # Extract detection boxes
-    # next_boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
-    # # Extract detection scores
-    # next_scores = detection_graph.get_tensor_by_name('detection_scores:0')
-    # # Extract detection classes
-    # next_classes = detection_graph.get_tensor_by_name('detection_classes:0')
-    detections = {key: value[0, :num_detections].numpy()
-                  for key, value in detections.items()}
-    print("detections")
-    print(detections)
-    detections['num_detections'] = num_detections
+    #Detections object has
+        # proposal_boxes_normalized
+        # detection_anchor_indices
+        # raw_detection_boxes
+        # class_predictions_with_background
+        # box_classifier_features
+        # proposal_boxes
+        # rpn_features_to_crop
+        # rpn_objectness_predictions_with_background
+        # mask_predictions
+        # detection_boxes
+        # detection_masks
+        # refined_box_encodings
+        # final_anchors
+        # rpn_box_predictor_features
+        # raw_detection_scores
+        # detection_classes
+        # rpn_box_encodings
+        # num_proposals
+        # detection_multiclass_scores
+        # image_shape
+        # anchors
+        # detection_scores
 
-    # detection_classes should be ints.
-    detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
-    print("detections")
-    print(detections)
 
+    # print(detections.items())
+    for key, value in detections.items():
+        print(key)
+        detections[key] = value[0]
+
+    image_np_with_detections = cv2.imread(file_name)
+    (h, w) = image_np_with_detections.shape[:2]
+    for index, box in enumerate(detections['detection_boxes']):
+        startX = int(startX * w)
+        startY = int(startY * h)
+        endX = int(endX * w)
+        endY = int(endY * h)
+        y = startY - 10 if startY - 10 > 10 else startY + 10
+        cv2.putText(image_np_with_detections, detections['detection_classes'][index], (startX, y), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65, (0, 255, 0), 2)
+        cv2.rectangle(image_np_with_detections, (startX, startY), (endX, endY),
+                      (0, 255, 0), 2)
+        cv2.imshow("Output", image_np_with_detections)
+        cv2.waitKey(0)
 
 except Exception as e:
     print("ERROR")
