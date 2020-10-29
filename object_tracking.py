@@ -197,28 +197,26 @@ def assign_detections_to_trackers(trackers, detections, iou_thrd=0.3):
     return matches, np.array(unmatched_detections), np.array(unmatched_trackers)
 
 
-def detect (current_image):
-    global new_model
-    start_time = int(round(time.time() * 1000))
+# def detect (current_image):
+#     global new_model
+#     start_time = int(round(time.time() * 1000))
+#
+#     img_array = np.array(Image.open(current_image))
+#
+#     #image_np_expanded = np.expand_dims(current_image, axis=0)
+#     input_tensor = tf.convert_to_tensor(img_array)
+#     input_tensor = input_tensor[tf.newaxis, ...]
+#     detections = new_model.predict(input_tensor)
+#     print(detections)
 
-    img_array = np.array(Image.open(current_image))
-
-    #image_np_expanded = np.expand_dims(current_image, axis=0)
-    input_tensor = tf.convert_to_tensor(img_array)
-    input_tensor = input_tensor[tf.newaxis, ...]
-    detections = new_model.predict(input_tensor)
-    print(detections)
-
-file_name = "person_test_images/Lake-Calhoun_MAIN_2.jpg"
-
-IMAGE_FOLDER = "test_images/"
+IMAGE_FOLDER = "ball_images/"
 
 IMAGE_PATHS = os.listdir(IMAGE_FOLDER)
 IMAGE_PATHS = [IMAGE_FOLDER + sub for sub in IMAGE_PATHS]
 category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS,
                                                                     use_display_name=True)
-for image_path in IMAGE_PATHS:
-
+#for image_path in IMAGE_PATHS:
+def detect(image_path):
     print('Running inference for {}... '.format(image_path), end='')
 
     image_np = load_image_into_numpy_array(image_path)
@@ -260,16 +258,16 @@ for image_path in IMAGE_PATHS:
           category_index,
           use_normalized_coordinates=True,
           max_boxes_to_draw=200,
-          min_score_thresh=.30,
+          min_score_thresh=.70,
           agnostic_mode=False)
-
+    #print(detections['detection_boxes'])
+    print(detections['detection_scores'])
     plt.figure()
     plt.imsave('output/' + str('detections') + '.jpg', image_np_with_detections)
 
     # plt.figure()
     # plt.imshow(image_np_with_detections)
     print('Done')
-    break
 #plt.show()
 
 
