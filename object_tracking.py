@@ -11,6 +11,8 @@ import tracker
 import helpers
 import time
 import keras
+from PIL import Image
+import sys
 
 
 tf.get_logger().setLevel('ERROR')           # Suppress TensorFlow logging (2)
@@ -71,8 +73,10 @@ PATH_TO_CKPT = MODEL_NAME + "/checkpoint"
 print('Loading model... ', end='')
 start_time = time.time()
 
-new_model = keras.models.load_model(model_location)
-
+new_model1 = keras.models.load_model(model_location)
+print(type(new_model1))
+new_model2= tf.saved_model.load(model_location)
+print(type(new_model2))
 end_time = time.time()
 elapsed_time = end_time - start_time
 print('Done! Took {} seconds'.format(elapsed_time))
@@ -193,9 +197,86 @@ def assign_detections_to_trackers(trackers, detections, iou_thrd=0.3):
 
 
 def detect (current_image):
+    global new_model
     start_time = int(round(time.time() * 1000))
-    image_np_expanded = np.expand_dims(current_image, axis=0)
 
+    img_array = np.array(Image.open(current_image))
+
+    #image_np_expanded = np.expand_dims(current_image, axis=0)
+    input_tensor = tf.convert_to_tensor(img_array)
+    input_tensor = input_tensor[tf.newaxis, ...]
+    detections = new_model.predict(input_tensor)
+    print(detections)
+
+file_name = "person_test_images/Lake-Calhoun_MAIN_2.jpg"
+img = keras.preprocessing.image.load_img(file_name)
+img = keras.preprocessing.image.img_to_array(img)
+img = img.astype('float32')
+img /= 255.0
+img = keras.backend.expand_dims(img)
+
+img2 = np.array(Image.open("person_test_images/Lake-Calhoun_MAIN_2.jpg"))
+input_tensor = tf.convert_to_tensor(img2)
+# print("Model 1 with img")
+# try:
+#     new_model1(img)
+# except Exception as e: print(e)
+#
+# print("Model 1 with img")
+# try:
+#     new_model2(img)
+# except Exception as e: print(e)
+#
+# print("Model 1 with input_tensor")
+# try:
+#     new_model1(input_tensor)
+# except Exception as e: print(e)
+#
+# print("Model 2 with input_tensor")
+# try:
+#     new_model2(input_tensor)
+# except Exception as e: print(e)
+
+input_tensor2 = input_tensor[tf.newaxis, ...]
+print("Model 1 with input_tensor2")
+try:
+    detections = new_model1(input_tensor2)
+    print("detections")
+    print(detections)
+    print(detections.items())
+    num_detections = int(detections.pop('num_detections'))
+    print("num_detections")
+    print(num_detections)
+    if detections['image_tensor']:
+        print("has image tensor")
+    if detections['detection_boxes']:
+        print("has detection_boxes")
+    if detections['detection_scores']:
+        print("has detection_scores")
+    if detections['detection_classes']:
+        print("has detection_classes")
+    # image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
+    # # Extract detection boxes
+    # next_boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
+    # # Extract detection scores
+    # next_scores = detection_graph.get_tensor_by_name('detection_scores:0')
+    # # Extract detection classes
+    # next_classes = detection_graph.get_tensor_by_name('detection_classes:0')
+    detections = {key: value[0, :num_detections].numpy()
+                  for key, value in detections.items()}
+    print("detections")
+    print(detections)
+    detections['num_detections'] = num_detections
+
+    # detection_classes should be ints.
+    detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
+    print("detections")
+    print(detections)
+
+
+except Exception as e:
+    print("ERROR")
+    print(e)
 
 
 
