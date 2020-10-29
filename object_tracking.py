@@ -12,7 +12,9 @@ import helpers
 import time
 import keras
 from PIL import Image
-
+from object_detection.utils import visualization_utils as viz_utils
+from object_detection.utils import label_map_util
+import matplotlib.pyplot as plt
 
 tf.get_logger().setLevel('ERROR')           # Suppress TensorFlow logging (2)
 
@@ -27,8 +29,9 @@ THRESHOLD = 0.8
 
 # What model to download.
 # Models can bee found here: https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md
-MODEL_NAME = 'mask_rcnn_inception_resnet_v2_1024x1024_coco17_gpu-8'
-#MODEL_NAME = 'mask_rcnn_inception_resnet_v2_atrous_coco_2018_01_28'
+# http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8.tar.gz
+# MODEL_NAME = 'mask_rcnn_inception_resnet_v2_1024x1024_coco17_gpu-8'
+MODEL_NAME = 'faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8'
 MODEL_FILE = MODEL_NAME + '.tar.gz'
 DOWNLOAD_BASE = 'http://download.tensorflow.org/models/object_detection/tf2/20200711/'
 
@@ -72,10 +75,8 @@ PATH_TO_CKPT = MODEL_NAME + "/checkpoint"
 print('Loading model... ', end='')
 start_time = time.time()
 
-new_model1 = keras.models.load_model(model_location)
-print(type(new_model1))
-new_model2= tf.saved_model.load(model_location)
-print(type(new_model2))
+detect_fn = keras.models.load_model(model_location)
+print(type(detect_fn))
 end_time = time.time()
 elapsed_time = end_time - start_time
 print('Done! Took {} seconds'.format(elapsed_time))
@@ -90,9 +91,10 @@ print('Done! Took {} seconds'.format(elapsed_time))
 
 # Helper code
 def load_image_into_numpy_array(image):
-    (im_width, im_height) = image.size
-    return np.array(image.getdata()).reshape(
-        (im_height, im_width, 3)).astype(np.uint8)
+    # (im_width, im_height) = image.size
+    # return np.array(image.getdata()).reshape(
+    #     (im_height, im_width, 3)).astype(np.uint8)
+    return np.array(Image.open(image))
 
 
 def trim_score_array(input_array):
@@ -209,36 +211,137 @@ def detect (current_image):
 
 file_name = "person_test_images/Lake-Calhoun_MAIN_2.jpg"
 
-img2 = np.array(Image.open(file_name))
-input_tensor = tf.convert_to_tensor(img2)
+IMAGE_FOLDER = "test_images/"
 
-input_tensor2 = input_tensor[tf.newaxis, ...]
-print("Model 1 with input_tensor2")
+IMAGE_PATHS = os.listdir(IMAGE_FOLDER)
+IMAGE_PATHS = [IMAGE_FOLDER + sub for sub in IMAGE_PATHS]
+category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS,
+                                                                    use_display_name=True)
+for image_path in IMAGE_PATHS:
 
-detections = new_model1(input_tensor2)
-print("Predictions complete")
-num_detections = int(detections.pop('num_detections'))
+    print('Running inference for {}... '.format(image_path), end='')
 
-for key, value in detections.items():
-    detections[key] = value[0]
+    image_np = load_image_into_numpy_array(image_path)
 
-image_np_with_detections = cv2.imread(file_name)
-(h, w) = image_np_with_detections.shape[:2]
+    # Things to try:
+    # Flip horizontally
+    # image_np = np.fliplr(image_np).copy()
 
-for index, box in enumerate(detections['detection_boxes']):
-    score = detections['detection_scores'][index].numpy()
-    if score > THRESHOLD:
-        startX = int(detections['detection_boxes'][index][0] * w)
-        startY = int(detections['detection_boxes'][index][1] * h)
-        endX = int(detections['detection_boxes'][index][2] * w)
-        endY = int(detections['detection_boxes'][index][3] * h)
-        y = startY - 10 if startY - 10 > 10 else startY + 10
-        detection_class = str(detections['detection_classes'][index].numpy())
-        cv2.putText(image_np_with_detections, detection_class, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
-        cv2.rectangle(image_np_with_detections, (startX, startY), (endX, endY), (0, 255, 0), 2)
+    # Convert image to grayscale
+    # image_np = np.tile(
+    #     np.mean(image_np, 2, keepdims=True), (1, 1, 3)).astype(np.uint8)
 
-cv2.imshow("Output", image_np_with_detections)
-cv2.waitKey(0)
+    # The input needs to be a tensor, convert it using `tf.convert_to_tensor`.
+    input_tensor = tf.convert_to_tensor(image_np)
+    # The model expects a batch of images, so add an axis with `tf.newaxis`.
+    input_tensor = input_tensor[tf.newaxis, ...]
+
+    # input_tensor = np.expand_dims(image_np, 0)
+    detections = detect_fn(input_tensor)
+
+    # All outputs are batches tensors.
+    # Convert to numpy arrays, and take index [0] to remove the batch dimension.
+    # We're only interested in the first num_detections.
+    num_detections = int(detections.pop('num_detections'))
+    detections = {key: value[0, :num_detections].numpy()
+                   for key, value in detections.items()}
+    detections['num_detections'] = num_detections
+
+    # detection_classes should be ints.
+    detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
+
+    image_np_with_detections = image_np.copy()
+
+    viz_utils.visualize_boxes_and_labels_on_image_array(
+          image_np_with_detections,
+          detections['detection_boxes'],
+          detections['detection_classes'],
+          detections['detection_scores'],
+          category_index,
+          use_normalized_coordinates=True,
+          max_boxes_to_draw=200,
+          min_score_thresh=.30,
+          agnostic_mode=False)
+
+    plt.figure()
+    plt.imsave('output/' + str('detections') + '.jpg', image_np_with_detections)
+
+    # plt.figure()
+    # plt.imshow(image_np_with_detections)
+    print('Done')
+    break
+#plt.show()
+
+
+
+
+
+
+
+# for image_path in IMAGE_PATHS:
+#     image_np = np.array(Image.open(file_name))
+#     input_tensor = tf.convert_to_tensor(image_np)
+#
+#     input_tensor2 = input_tensor[tf.newaxis, ...]
+#     print("Model 1 with input_tensor2")
+#
+#     detections = new_model1(input_tensor2)
+#     print("Predictions complete")
+#     num_detections = int(detections.pop('num_detections'))
+#
+#     detections = {key: value[0, :num_detections].numpy() for key, value in detections.items()}
+#
+#     detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
+#
+#     image_np_with_detections = image_np.copy()
+#
+#     # detections['num_detections'] = num_detections
+#     #
+#     # for key, value in detections.items():
+#     #     detections[key] = value[0]
+#     #
+#     # image_np_with_detections = cv2.imread(file_name)
+#     # (h, w) = image_np_with_detections.shape[:2]
+#
+#     viz_utils.visualize_boxes_and_labels_on_image_array(
+#         image_np_with_detections,
+#         detections['detection_boxes'],
+#         detections['detection_classes'],
+#         detections['detection_scores'],
+#         category_index,
+#         use_normalized_coordinates=True,
+#         max_boxes_to_draw=200,
+#         min_score_thresh=.30,
+#         agnostic_mode=False)
+#
+#
+#     plt.figure()
+#     plt.imshow(image_np_with_detections)
+#     print('Done')
+# plt.show()
+
+# for index, box in enumerate(detections['detection_boxes']):
+#     score = detections['detection_scores'][index].numpy()
+#     if score > THRESHOLD:
+#         startX = int(detections['detection_boxes'][index][0] * w)
+#         startY = int(detections['detection_boxes'][index][1] * h)
+#         endX = int(detections['detection_boxes'][index][2] * w)
+#         endY = int(detections['detection_boxes'][index][3] * h)
+#         print("Start x")
+#         print(startX)
+#         print("startY")
+#         print(startY)
+#         print("endX")
+#         print(endX)
+#         print("endY")
+#         print(endY)
+#         y = startY - 10 if startY - 10 > 10 else startY + 10
+#         detection_class = str(detections['detection_classes'][index].numpy())
+#         cv2.putText(image_np_with_detections, detection_class, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
+#         cv2.rectangle(image_np_with_detections, (startX, startY), (endX, endY), (0, 255, 0), 2)
+
+# cv2.imshow("Output", image_np_with_detections)
+# cv2.waitKey(0)
 
 
 
