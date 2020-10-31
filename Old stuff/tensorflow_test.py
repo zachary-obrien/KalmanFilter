@@ -24,7 +24,7 @@ from object_detection.utils import visualization_utils as vis_util
 
 if "models" in pathlib.Path.cwd().parts:
   while "models" in pathlib.Path.cwd().parts:
-    os.chdir('..')
+    os.chdir('../..')
 #elif not pathlib.Path('models').exists():
 #  get_ipython().system(u'git clone --depth 1 https://github.com/tensorflow/models')
 

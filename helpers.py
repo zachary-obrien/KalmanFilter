@@ -13,25 +13,30 @@ class Box:
         self.prob = float()
 
 def box_array_to_pixels(boxes, dim):
-    outer = boxes[0]
-    return_inside = []
-    for box in outer: 
-        individual_box = box_normal_to_pixel(box, dim)
-        #print("individual box")
-        #print(individual_box)
-        #print("end individual box")
-        #print(boxes)
-        #print(dim)
-        #print("ADDED SOME SHIT")
-        return_inside.append(individual_box)
 
-    return return_inside
-
-# Helper function to convert normalized box coordinates to pixels
-def box_normal_to_pixel(box, dim):    
-    height, width = dim[0], dim[1]
-    box_pixel = [int(box[0]*height), int(box[1]*width), int(box[2]*height), int(box[3]*width)]
-    return np.array(box_pixel)    
+    boxes[:,0] *= dim[0]
+    boxes[:,1] *= dim[1]
+    boxes[:,2] *= dim[0]
+    boxes[:,3] *= dim[1]
+#     outer = boxes[0]
+#     return_inside = []
+#     for box in outer:
+#         individual_box = box_normal_to_pixel(box, dim)
+#         #print("individual box")
+#         #print(individual_box)
+#         #print("end individual box")
+#         #print(boxes)
+#         #print(dim)
+#         #print("ADDED SOME SHIT")
+#         return_inside.append(individual_box)
+#
+#     return return_inside
+#
+# # Helper function to convert normalized box coordinates to pixels
+# def box_normal_to_pixel(box, dim):
+#     height, width = dim[0], dim[1]
+#     box_pixel = [int(box[0]*height), int(box[1]*width), int(box[2]*height), int(box[3]*width)]
+#     return np.array(box_pixel)
 
 def overlap(x1,w1,x2,w2):
     l1 = x1 - w1 / 2.;

@@ -4,17 +4,16 @@ from collections import defaultdict, deque
 import urllib as urllib
 import tarfile
 import tensorflow as tf
-import zipfile
 import numpy as np
 import linear_assignment
 import tracker
 import helpers
 import time
 import keras
-from PIL import Image
 from object_detection.utils import visualization_utils as viz_utils
 from object_detection.utils import label_map_util
 import matplotlib.pyplot as plt
+from frame_detections import FrameDetection
 
 tf.get_logger().setLevel('ERROR')           # Suppress TensorFlow logging (2)
 
@@ -50,6 +49,8 @@ max_age = 4  # no.of consecutive unmatched detection before
 
 min_hits =1  # no. of consecutive matches needed to establish a track
 
+frame_count = 0
+
 tracker_list =[] # list for trackers
 # list for track ID
 track_id_list= deque(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'])
@@ -81,6 +82,12 @@ end_time = time.time()
 elapsed_time = end_time - start_time
 print('Done! Took {} seconds'.format(elapsed_time))
 
+IMAGE_FOLDER = "ball_images/"
+
+IMAGE_PATHS = os.listdir(IMAGE_FOLDER)
+IMAGE_PATHS = [IMAGE_FOLDER + sub for sub in IMAGE_PATHS]
+category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS,
+                                                                    use_display_name=True)
 # Loading label map
 # Label maps map indices to category names, so that when our convolution network predicts `5`, we know that this corresponds to `airplane`.  Here we use internal utility functions, but anything that returns a dictionary mapping integers to appropriate string labels would be fine
 # label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
@@ -90,62 +97,16 @@ print('Done! Took {} seconds'.format(elapsed_time))
 
 
 # Helper code
-def load_image_into_numpy_array(image):
+def load_image_into_numpy_array(image, from_file=True):
     # (im_width, im_height) = image.size
     # return np.array(image.getdata()).reshape(
     #     (im_height, im_width, 3)).astype(np.uint8)
-    return np.array(Image.open(image))
+    if from_file:
+        image = cv2.imread(image)
+        #Image.open(image)
+    return np.array(image)
 
-
-def trim_score_array(input_array):
-    score_array = input_array[0]
-    output_score = []
-    # print("trim_score_array")
-    # print(input_array)
-    for x in range(len(score_array)):
-        if score_array[x] > THRESHOLD:
-            output_score.append(score_array[x])
-    output_score_wrapper = [output_score]
-    # print(output_score_wrapper)
-    # print(output_score)
-    # print(len(output_score))
-    return output_score_wrapper, len(output_score)
-
-
-def trim_array(input_array, trim_length, numpy_array=False):
-    inside_array = input_array[0]
-    # print(type(inside_array))
-    output_array = []
-    # print("TRIMMING ARRAY")
-    # print("input_array: ")
-    # print(input_array)
-    # print("trim_length")
-    # print(trim_length)
-    for x in range(trim_length):
-        # print("append: ")
-        # print(num_array)
-        # print(type(inside_array[x]))
-        # print(inside_array[x])
-        output_array.append(np.array(inside_array[x]))
-    # print("END TRIMMING ARRAY")
-    if numpy_array:
-        # output_array = np.asarray(output_array)
-        output_wrapper = np.array(output_array)
-    else:
-        output_wrapper = [output_array]
-    # print("output_array")
-    output1 = np.array([output_wrapper])
-    # print(type(output1))
-    # print(output1)
-    # output2 = np.array(output_wrapper)
-    # print(type(output2))
-    # print(output2)
-    # if numpy_array:
-    #    exit()
-    return output1
-
-
-def assign_detections_to_trackers(trackers, detections, iou_thrd=0.3):
+def assign_detections_to_trackers(trackers, detections, iou_thrd=0.3, current_frame=0):
     '''
     From current list of trackers and new detections, output matched detections,
     unmatchted trackers, unmatched detections.
@@ -154,6 +115,19 @@ def assign_detections_to_trackers(trackers, detections, iou_thrd=0.3):
     # print(trackers)
     # print(detections)
     # print("END ASSIGN_DETECTIONS_TO_TRACKERS")
+
+    unmatched_trackers, unmatched_detections = [], []
+    matches = []
+
+    if frame_count == 1:
+        matches = np.empty((0, 2), dtype=int)
+        for d, det in enumerate(detections):
+            unmatched_detections.append(d)
+
+        return matches, np.array(unmatched_detections), np.array(unmatched_trackers)
+
+
+
     IOU_mat = np.zeros((len(trackers), len(detections)), dtype=np.float32)
     for t, trk in enumerate(trackers):
         # trk = convert_to_cv2bbox(trk)
@@ -167,7 +141,6 @@ def assign_detections_to_trackers(trackers, detections, iou_thrd=0.3):
 
     matched_idx = linear_assignment.linear_assignment(-IOU_mat)
 
-    unmatched_trackers, unmatched_detections = [], []
     for t, trk in enumerate(trackers):
         if (t not in matched_idx[:, 0]):
             unmatched_trackers.append(t)
@@ -176,7 +149,6 @@ def assign_detections_to_trackers(trackers, detections, iou_thrd=0.3):
         if (d not in matched_idx[:, 1]):
             unmatched_detections.append(d)
 
-    matches = []
 
     # For creating trackers we consider any detection with an
     # overlap less than iou_thrd to signifiy the existence of
@@ -209,17 +181,11 @@ def assign_detections_to_trackers(trackers, detections, iou_thrd=0.3):
 #     detections = new_model.predict(input_tensor)
 #     print(detections)
 
-IMAGE_FOLDER = "ball_images/"
-
-IMAGE_PATHS = os.listdir(IMAGE_FOLDER)
-IMAGE_PATHS = [IMAGE_FOLDER + sub for sub in IMAGE_PATHS]
-category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS,
-                                                                    use_display_name=True)
 #for image_path in IMAGE_PATHS:
-def detect(image_path):
-    print('Running inference for {}... '.format(image_path), end='')
+def detect(image, from_file=True):
+    print('Running inference for {}... '.format(image), end='')
 
-    image_np = load_image_into_numpy_array(image_path)
+    image_np = load_image_into_numpy_array(image, from_file)
 
     # Things to try:
     # Flip horizontally
@@ -260,19 +226,178 @@ def detect(image_path):
           max_boxes_to_draw=200,
           min_score_thresh=.70,
           agnostic_mode=False)
+
     #print(detections['detection_boxes'])
     print(detections['detection_scores'])
+    print(type(detections['detection_classes']))
     plt.figure()
-    plt.imsave('output/' + str('detections') + '.jpg', image_np_with_detections)
+    #plt.imsave('output/' + str('detections') + '.jpg', image_np_with_detections)
 
     # plt.figure()
     # plt.imshow(image_np_with_detections)
     print('Done')
+    return FrameDetection(image_np_with_detections, detections['detection_boxes'], detections['detection_classes'],
+                          detections['detection_scores'])
+
+def pipeline(boxes, image):
+    '''
+    Pipeline function for detection and tracking
+    '''
+    global frame_count
+    global tracker_list
+    global max_age
+    global min_hits
+    global track_id_list
+    global debug
+
+    frame_count += 1
+
+    # img_dim = (image.shape[1], image.shape[0])
+    # pixel_boxes = helpers.box_array_to_pixels(boxes, img_dim)
+    # z_box = pixel_boxes  # det.get_localization(img) # measurement
+    z_box = boxes
+    if debug:
+        print('Frame:', frame_count)
+
+    x_box = []
+    if debug:
+        for i in range(len(z_box)):
+            img1 = helpers.draw_box_label(image, z_box[i], box_color=(255, 0, 0))
+            plt.imshow(img1)
+        plt.show()
+
+    if len(tracker_list) > 0:
+        for trk in tracker_list:
+            x_box.append(trk.box)
+
+    matched, unmatched_dets, unmatched_trks \
+        = assign_detections_to_trackers(x_box, z_box, iou_thrd=0.3, current_frame=frame_count)
+
+    if debug:
+        print('Detection: ', z_box)
+        print('x_box: ', x_box)
+        print('matched:', matched)
+        print('unmatched_det:', unmatched_dets)
+        print('unmatched_trks:', unmatched_trks)
+
+    # Deal with matched detections
+    if matched.size > 0:
+        for trk_idx, det_idx in matched:
+            z = z_box[det_idx]
+            z = np.expand_dims(z, axis=0).T
+            tmp_trk = tracker_list[trk_idx]
+            tmp_trk.kalman_filter(z)
+            xx = tmp_trk.x_state.T[0].tolist()
+            xx = [xx[0], xx[2], xx[4], xx[6]]
+            x_box[trk_idx] = xx
+            print(xx)
+            tmp_trk.box = xx
+            tmp_trk.hits += 1
+            print("NUM HITS:")
+            print(tmp_trk.hits)
+            # print(tmp_trk.location_history)
+            # print(np.asarray([np.array(xx)]))
+            # print("Now to concatenate")
+            tmp_trk.location_history = np.concatenate((tmp_trk.location_history, np.asarray([np.array(xx)])))
+            # print(np.array(xx))
+            print(tmp_trk.location_history)
+            tmp_trk.no_losses = 0
+
+    # Deal with unmatched detections
+    if len(unmatched_dets) > 0:
+        for idx in unmatched_dets:
+            z = z_box[idx]
+            print("UNMATCHED DETECTINOS")
+            # print(z)
+            z = np.expand_dims(z, axis=0).T
+            # print(z)
+            tmp_trk = tracker.Tracker()  # Create a new tracker
+            x = np.array([[z[0], 0, z[1], 0, z[2], 0, z[3], 0]]).T
+            # print("trouble x")
+            # print(x)
+            # print("end trouble x")
+            tmp_trk.x_state = x
+            tmp_trk.predict_only()
+            xx = tmp_trk.x_state
+            xx = xx.T[0].tolist()
+            xx = [xx[0], xx[2], xx[4], xx[6]]
+            tmp_trk.box = xx
+            print(track_id_list)
+            tmp_trk.id = track_id_list.popleft()  # assign an ID for the tracker
+            tracker_list.append(tmp_trk)
+            x_box.append(xx)
+            print("END UNMATCHED DETECTIONS")
+
+    # Deal with unmatched tracks
+    if len(unmatched_trks) > 0:
+        for trk_idx in unmatched_trks:
+            tmp_trk = tracker_list[trk_idx]
+            tmp_trk.no_losses += 1
+            tmp_trk.predict_only()
+            xx = tmp_trk.x_state
+            xx = xx.T[0].tolist()
+            xx = [xx[0], xx[2], xx[4], xx[6]]
+            tmp_trk.box = xx
+            x_box[trk_idx] = xx
+
+    # The list of tracks to be annotated
+    good_tracker_list = []
+    for trk in tracker_list:
+        if ((trk.hits >= min_hits) and (trk.no_losses <= max_age)):
+            good_tracker_list.append(trk)
+            x_cv2 = trk.box
+            if debug:
+                print('updated box: ', x_cv2)
+                print()
+            # img = helpers.draw_box_label(img, x_cv2) # Draw the bounding boxes on the
+            next_image = helpers.draw_box_label(next_image, x_cv2)
+            # images
+    # Book keeping
+    deleted_tracks = filter(lambda x: x.no_losses > max_age, tracker_list)
+
+    for trk in deleted_tracks:
+        track_id_list.append(trk.id)
+
+    tracker_list = [x for x in tracker_list if x.no_losses <= max_age]
+
+    if debug:
+        print('Ending tracker_list: ', len(tracker_list))
+        print('Ending good tracker_list: ', len(good_tracker_list))
+
+    # return img
+
+def run_flow():
+    while(True):
+        ret, frame = cap.read()
+        frame_detection = detect(frame, from_file=False)
+        frame_detection.trim_by_score_threshold(0.6)
+        pipeline(frame_detection.get_boxes(), frame_detection.get_image())
+
+
+if __name__ == "__main__":
+    # execute only if run as a script
+    run_flow()
+# detection_list = []
+# for image_path in IMAGE_PATHS:
+#     detection_list.append(detect(image_path))
+#
+# for detection in detection_list:
+#     print("************************************")
+#     print("Detection")
+#     print(repr(detection))
+#     print("************************************")
+#     print("Trimming")
+#     detection.trim_by_score_threshold(0.5)
+#     print("************************************")
+#     print(repr(detection))
+#     print("************************************")
 #plt.show()
 
 
 
 
+
+# ***** SCRAP NOTES AFTER THIS*****
 
 
 
