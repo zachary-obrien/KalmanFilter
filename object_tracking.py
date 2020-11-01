@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-#Copyright (c) 2020, Zachary OBrien, All rights reserved.
+# Copyright (C) Zachary OBrien - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Zachary OBrien <zacharyaob@gmail.com>, September 2020
 
 import cv2
 import os
@@ -26,6 +29,7 @@ for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
 #https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2.md
+cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
 cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
 THRESHOLD = 0.8
 

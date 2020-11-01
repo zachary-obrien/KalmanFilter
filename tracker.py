@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-#Copyright (c) 2020, Zachary OBrien, All rights reserved.
+# Copyright (C) Zachary OBrien - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Zachary OBrien <zacharyaob@gmail.com>, September 2020
+
 import numpy as np
 from numpy import dot
 from scipy.linalg import inv, block_diag
