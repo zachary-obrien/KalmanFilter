@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#Copyright (c) 2020, Zachary OBrien, All rights reserved.
 package apiV2
 
 import (

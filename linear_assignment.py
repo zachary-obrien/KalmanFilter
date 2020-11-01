@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+#Copyright 2020, Zachary OBrien, All rights reserved.
+
 """
 Solve the unique lowest-cost assignment problem using the
 Hungarian algorithm (also known as Munkres algorithm).

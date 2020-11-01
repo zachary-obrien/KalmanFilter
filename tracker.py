@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#Copyright (c) 2020, Zachary OBrien, All rights reserved.
 import numpy as np
 from numpy import dot
 from scipy.linalg import inv, block_diag

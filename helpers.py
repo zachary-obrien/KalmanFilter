@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+#Copyright 2020, Zachary OBrien, All rights reserved.
+
 """
 Helper classes and functions for detection and tracking
 """
