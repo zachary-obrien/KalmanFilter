@@ -55,7 +55,8 @@ tracker_list =[] # list for trackers
 # list for track ID
 track_id_list= deque(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'])
 
-debug = False #True
+debug =  False
+#debug =  True
 
 print("defined variables")
 # Download Model
@@ -119,11 +120,11 @@ def assign_detections_to_trackers(trackers, detections, iou_thrd=0.3, current_fr
     unmatched_trackers, unmatched_detections = [], []
     matches = []
 
-    if frame_count == 1:
+    if current_frame == 1:
+        print("First Frame")
         matches = np.empty((0, 2), dtype=int)
         for d, det in enumerate(detections):
             unmatched_detections.append(d)
-
         return matches, np.array(unmatched_detections), np.array(unmatched_trackers)
 
 
@@ -183,7 +184,7 @@ def assign_detections_to_trackers(trackers, detections, iou_thrd=0.3, current_fr
 
 #for image_path in IMAGE_PATHS:
 def detect(image, from_file=True):
-    print('Running inference for {}... '.format(image), end='')
+    #print('Running inference for {}... '.format(image), end='')
 
     image_np = load_image_into_numpy_array(image, from_file)
 
@@ -228,8 +229,8 @@ def detect(image, from_file=True):
           agnostic_mode=False)
 
     #print(detections['detection_boxes'])
-    print(detections['detection_scores'])
-    print(type(detections['detection_classes']))
+    #print(detections['detection_scores'])
+    #print(type(detections['detection_classes']))
     plt.figure()
     #plt.imsave('output/' + str('detections') + '.jpg', image_np_with_detections)
 
@@ -252,19 +253,20 @@ def pipeline(boxes, image):
 
     frame_count += 1
 
-    # img_dim = (image.shape[1], image.shape[0])
-    # pixel_boxes = helpers.box_array_to_pixels(boxes, img_dim)
-    # z_box = pixel_boxes  # det.get_localization(img) # measurement
-    z_box = boxes
+    img_dim = (image.shape[1], image.shape[0])
+    pixel_boxes = helpers.box_array_to_pixels(boxes, img_dim)
+    z_box = pixel_boxes  # det.get_localization(img) # measurement
+    #z_box = boxes
+    img = image
     if debug:
         print('Frame:', frame_count)
 
     x_box = []
-    if debug:
-        for i in range(len(z_box)):
-            img1 = helpers.draw_box_label(image, z_box[i], box_color=(255, 0, 0))
-            plt.imshow(img1)
-        plt.show()
+    # if debug:
+    #     for i in range(len(z_box)):
+    #         img1 = helpers.draw_box_label(image, z_box[i], box_color=(255, 0, 0))
+    #         plt.imshow(img1)
+    #     plt.show()
 
     if len(tracker_list) > 0:
         for trk in tracker_list:
@@ -350,7 +352,7 @@ def pipeline(boxes, image):
                 print('updated box: ', x_cv2)
                 print()
             # img = helpers.draw_box_label(img, x_cv2) # Draw the bounding boxes on the
-            next_image = helpers.draw_box_label(next_image, x_cv2)
+            #img = helpers.draw_box_label(image, x_cv2)
             # images
     # Book keeping
     deleted_tracks = filter(lambda x: x.no_losses > max_age, tracker_list)
@@ -364,15 +366,17 @@ def pipeline(boxes, image):
         print('Ending tracker_list: ', len(tracker_list))
         print('Ending good tracker_list: ', len(good_tracker_list))
 
-    # return img
+    return img
 
 def run_flow():
     while(True):
         ret, frame = cap.read()
         frame_detection = detect(frame, from_file=False)
-        frame_detection.trim_by_score_threshold(0.6)
-        pipeline(frame_detection.get_boxes(), frame_detection.get_image())
-
+        frame_detection.trim_by_score_threshold(0.8)
+        labeled_output = pipeline(frame_detection.get_boxes(), frame_detection.get_image())
+        cv2.imshow('frame', labeled_output)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
 if __name__ == "__main__":
     # execute only if run as a script

@@ -18,6 +18,7 @@ def box_array_to_pixels(boxes, dim):
     boxes[:,1] *= dim[1]
     boxes[:,2] *= dim[0]
     boxes[:,3] *= dim[1]
+    return boxes
 #     outer = boxes[0]
 #     return_inside = []
 #     for box in outer:
