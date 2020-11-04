@@ -47,10 +47,10 @@ def get_template_match_positions(target_frame, template_file_name, match_method)
     # cv2.rectangle(img, matchLoc, (matchLoc[0] + templ))
 
     _minVal, _maxVal, min_loc, max_loc = cv2.minMaxLoc(result, None)
-    print(_minVal)
-    print(_maxVal)
-    print(min_loc)
-    print(max_loc)
+    #print(_minVal)
+    #print(_maxVal)
+    #print(min_loc)
+    #print(max_loc)
 
     return result
 
@@ -410,4 +410,4 @@ def run_tests():
 
 
 #run_tests()
-test_get_softmax_frame()
+#test_get_softmax_frame()
