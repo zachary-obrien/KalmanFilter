@@ -253,12 +253,16 @@ def detect(image, from_file=True):
     # plt.figure()
     # plt.imshow(image_np_with_detections)
     print('Done')
-    return FrameDetection(image_np_with_detections, detections['detection_boxes'], detections['detection_classes'],
-                          detections['detection_scores'])
+    frame_detect_object = FrameDetection(image_np_with_detections, detections['detection_boxes'],
+                                         detections['detection_classes'], detections['detection_scores'])
+    frame_detect_object.set_max_val_and_loc(max_val, max_loc)
+
+    return frame_detect_object
+
     # add process covariance tuple to return tuple
 
 
-def pipeline(boxes, image):
+def pipeline(boxes, image, max_val, max_loc):
     '''
     Pipeline function for detection and tracking
     '''
@@ -268,6 +272,15 @@ def pipeline(boxes, image):
     global min_hits
     global track_id_list
     global debug
+
+    # reads the .png file into a cv2 image
+    template_img = cv2.imread(template_matching.TEMPLATE_FILE_PNG, cv2.IMREAD_COLOR)
+
+    # sets template match box dimensions based on size of template image
+    template_bb_x, template_bb_y = max_loc[0] + template_img.shape[0], max_loc[1] + template_img.shape[1]
+
+    # draws boxes on image
+    cv2.rectangle(image, max_loc, (template_bb_x, template_bb_y), (0, 255, 0), 1, 8, 0)
 
     frame_count += 1
 
@@ -397,7 +410,8 @@ def run_flow():
             frame_number += 1
             frame_detection = detect(frame, from_file=False)
             frame_detection.trim_by_score_threshold(0.8)
-            labeled_output = pipeline(frame_detection.get_boxes(), frame_detection.get_image())
+            labeled_output = pipeline(frame_detection.get_boxes(), frame_detection.get_image(),
+                                      frame_detection.get_max_value(), frame_detection.get_max_location())
             cv2.imshow('frame', labeled_output)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

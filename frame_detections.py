@@ -14,6 +14,8 @@ class FrameDetection():
         self.__detection_classes = detection_classes
         self.__detection_scores = detection_scores
         self.__THRESHOLD = default_threshold
+        self.__max_value_from_template_match = 0
+        self.__max_value_location_from_template_match = 0
 
     def __repr__(self):
         output = "Detection Boxes Shape\n"
@@ -84,6 +86,16 @@ class FrameDetection():
 
     def get_image(self):
         return self.__image
+
+    def set_max_val_and_loc(self, max_val, max_loc):
+        self.__max_value_from_template_match = max_val
+        self.__max_value_location_from_template_match = max_loc
+
+    def get_max_value(self):
+        return self.__max_value_from_template_match
+
+    def get_max_location(self):
+        return self.__max_value_location_from_template_match
 
 
 if __name__ == "__main__":
