@@ -11,6 +11,7 @@ Helper classes and functions for detection and tracking
 import numpy as np
 import cv2
 
+
 class Box:
     def __init__(self):
         self.x, self.y = float(), float()
@@ -18,13 +19,15 @@ class Box:
         self.c = float()
         self.prob = float()
 
-def box_array_to_pixels(boxes, dim):
 
-    boxes[:,0] *= dim[0]
-    boxes[:,1] *= dim[1]
-    boxes[:,2] *= dim[0]
-    boxes[:,3] *= dim[1]
+def box_array_to_pixels(boxes, dim):
+    boxes[:, 0] *= dim[0]
+    boxes[:, 1] *= dim[1]
+    boxes[:, 2] *= dim[0]
+    boxes[:, 3] *= dim[1]
     return boxes
+
+
 #     outer = boxes[0]
 #     return_inside = []
 #     for box in outer:
@@ -45,7 +48,7 @@ def box_array_to_pixels(boxes, dim):
 #     box_pixel = [int(box[0]*height), int(box[1]*width), int(box[2]*height), int(box[3]*width)]
 #     return np.array(box_pixel)
 
-def overlap(x1,w1,x2,w2):
+def overlap(x1, w1, x2, w2):
     l1 = x1 - w1 / 2.;
     l2 = x2 - w2 / 2.;
     left = max(l1, l2)
@@ -54,6 +57,7 @@ def overlap(x1,w1,x2,w2):
     right = min(r1, r2)
     return right - left;
 
+
 def box_intersection(a, b):
     w = overlap(a.x, a.w, b.x, b.w);
     h = overlap(a.y, a.h, b.y, b.h);
@@ -61,13 +65,16 @@ def box_intersection(a, b):
     area = w * h;
     return area;
 
+
 def box_union(a, b):
     i = box_intersection(a, b);
     u = a.w * a.h + b.w * b.h - i;
     return u;
 
+
 def box_iou(a, b):
     return box_intersection(a, b) / box_union(a, b);
+
 
 def box_iou2(a, b):
     '''
@@ -75,14 +82,15 @@ def box_iou2(a, b):
     two boxes a and b
     a[0], a[1], a[2], a[3] <-> left, up, right, bottom
     '''
-    
-    w_intsec = np.maximum (0, (np.minimum(a[2], b[2]) - np.maximum(a[0], b[0])))
-    h_intsec = np.maximum (0, (np.minimum(a[3], b[3]) - np.maximum(a[1], b[1])))
+
+    w_intsec = np.maximum(0, (np.minimum(a[2], b[2]) - np.maximum(a[0], b[0])))
+    h_intsec = np.maximum(0, (np.minimum(a[3], b[3]) - np.maximum(a[1], b[1])))
     s_intsec = w_intsec * h_intsec
-    s_a = (a[2] - a[0])*(a[3] - a[1])
-    s_b = (b[2] - b[0])*(b[3] - b[1])
-  
-    return float(s_intsec)/(s_a + s_b -s_intsec)
+    s_a = (a[2] - a[0]) * (a[3] - a[1])
+    s_b = (b[2] - b[0]) * (b[3] - b[1])
+
+    return float(s_intsec) / (s_a + s_b - s_intsec)
+
 
 def convert_to_pixel(box_yolo, img, crop_range):
     '''
@@ -94,32 +102,31 @@ def convert_to_pixel(box_yolo, img, crop_range):
     
     crop_range: specifies the part of image to be cropped
     '''
-    
+
     box = box_yolo
     imgcv = img
     [xmin, xmax] = crop_range[0]
     [ymin, ymax] = crop_range[1]
     h, w, _ = imgcv.shape
-    
+
     # Calculate left, top, width, and height of the bounding box
-    left = int((box.x - box.w/2.)*(xmax - xmin) + xmin)
-    top = int((box.y - box.h/2.)*(ymax - ymin) + ymin)
-    
-    width = int(box.w*(xmax - xmin))
-    height = int(box.h*(ymax - ymin))
-    
+    left = int((box.x - box.w / 2.) * (xmax - xmin) + xmin)
+    top = int((box.y - box.h / 2.) * (ymax - ymin) + ymin)
+
+    width = int(box.w * (xmax - xmin))
+    height = int(box.h * (ymax - ymin))
+
     # Deal with corner cases
-    if left  < 0    :  left = 0
-    if top   < 0    :   top = 0
-    
+    if left < 0:  left = 0
+    if top < 0:   top = 0
+
     # Return the coordinates (in the unit of the pixels)
-  
+
     box_pixel = np.array([left, top, width, height])
     return box_pixel
 
 
-
-def convert_to_cv2bbox(bbox, img_dim = (1280, 720)):
+def convert_to_cv2bbox(bbox, img_dim=(1280, 720)):
     '''
     Helper fucntion for converting bbox to bbox_cv2
     bbox = [left, top, width, height]
@@ -131,35 +138,34 @@ def convert_to_cv2bbox(bbox, img_dim = (1280, 720)):
     top = np.maximum(0, bbox[1])
     right = np.minimum(img_dim[0], bbox[0] + bbox[2])
     bottom = np.minimum(img_dim[1], bbox[1] + bbox[3])
-    
+
     return (left, top, right, bottom)
-    
-    
+
+
 def draw_box_label(img, bbox_cv2, box_color=(0, 255, 255), show_label=True):
     '''
     Helper funciton for drawing the bounding boxes and the labels
     bbox_cv2 = [left, top, right, bottom]
     '''
-    #box_color= (0, 255, 255)
+    # box_color= (0, 255, 255)
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_size = 0.7
     font_color = (0, 0, 0)
     left, top, right, bottom = bbox_cv2[1], bbox_cv2[0], bbox_cv2[3], bbox_cv2[2]
-    
+
     # Draw the bounding box
     cv2.rectangle(img, (left, top), (right, bottom), box_color, 4)
-    
+
     if show_label:
         # Draw a filled box on top of the bounding box (as the background for the labels)
-        cv2.rectangle(img, (left-2, top-45), (right+2, top), box_color, -1, 1)
-        
+        cv2.rectangle(img, (left - 2, top - 45), (right + 2, top), box_color, -1, 1)
+
         # Output the labels that show the x and y coordinates of the bounding box center.
-        #text_x= 'x='+str((left+right)/2)
-        #cv2.putText(img,text_x,(left,top-25), font, font_size, font_color, 1, cv2.LINE_AA)
-        #text_y= 'y='+str((top+bottom)/2)
-        #cv2.putText(img,text_y,(left,top-5), font, font_size, font_color, 1, cv2.LINE_AA)
-        text_x= 'Center Point = ('+str((left+right)/2)+', '+str((top+bottom)/2) + ')'
-        cv2.putText(img,text_x,(left,top-25), font, font_size, font_color, 1, cv2.LINE_AA)
+        # text_x= 'x='+str((left+right)/2)
+        # cv2.putText(img,text_x,(left,top-25), font, font_size, font_color, 1, cv2.LINE_AA)
+        # text_y= 'y='+str((top+bottom)/2)
+        # cv2.putText(img,text_y,(left,top-5), font, font_size, font_color, 1, cv2.LINE_AA)
+        text_x = 'Center Point = (' + str((left + right) / 2) + ', ' + str((top + bottom) / 2) + ')'
+        cv2.putText(img, text_x, (left, top - 25), font, font_size, font_color, 1, cv2.LINE_AA)
 
-
-    return img    
+    return img

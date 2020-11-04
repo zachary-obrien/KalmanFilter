@@ -6,6 +6,7 @@
 
 import numpy as np
 
+
 class FrameDetection():
     def __init__(self, image, detection_boxes, detection_classes, detection_scores, default_threshold=0.7):
         self.__image = image

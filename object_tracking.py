@@ -247,9 +247,9 @@ def detect(image, from_file=True):
     # print(detections['detection_boxes'])
     # print(detections['detection_scores'])
     # print(type(detections['detection_classes']))
-    plt.figure()
+    # plt.figure()
     # plt.imsave('output/' + str('detections') + '.jpg', image_np_with_detections)
-
+    # plt.show()
     # plt.figure()
     # plt.imshow(image_np_with_detections)
     print('Done')
