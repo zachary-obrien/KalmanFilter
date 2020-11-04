@@ -28,8 +28,8 @@ gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
-#https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2.md
-cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
+# https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2.md
+# cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
 cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
 THRESHOLD = 0.8
 
@@ -46,7 +46,8 @@ DOWNLOAD_BASE = 'http://download.tensorflow.org/models/object_detection/tf2/2020
 PATH_TO_CKPT = MODEL_NAME + '/frozen_inference_graph.pb'
 
 # List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = os.path.join('/home/zac/models/research/object_detection/data/', 'mscoco_label_map.pbtxt')
+#PATH_TO_LABELS = os.path.join('/home/zac/models/research/object_detection/data/', 'mscoco_label_map.pbtxt')
+PATH_TO_LABELS = os.path.join('C:/Users/Cooper/Documents/Tensorflow/models/research/object_detection/data', 'mscoco_label_map.pbtxt')
 
 # Number of classes to detect
 NUM_CLASSES = 90
@@ -54,13 +55,13 @@ NUM_CLASSES = 90
 max_age = 4  # no.of consecutive unmatched detection before
              # a track is deleted
 
-min_hits =1  # no. of consecutive matches needed to establish a track
+min_hits = 1  # no. of consecutive matches needed to establish a track
 
 frame_count = 0
 
-tracker_list =[] # list for trackers
+tracker_list = [] # list for trackers
 # list for track ID
-track_id_list= deque(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'])
+track_id_list = deque(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'])
 
 debug =  False
 #debug =  True
@@ -117,7 +118,7 @@ def load_image_into_numpy_array(image, from_file=True):
 def assign_detections_to_trackers(trackers, detections, iou_thrd=0.3, current_frame=0):
     '''
     From current list of trackers and new detections, output matched detections,
-    unmatchted trackers, unmatched detections.
+    unmatched trackers, unmatched detections.
     '''
     # print("ASSIGN_DETECTIONS_TO_TRACKERS")
     # print(trackers)
@@ -211,6 +212,12 @@ def detect(image, from_file=True):
     # input_tensor = np.expand_dims(image_np, 0)
     detections = detect_fn(input_tensor)
 
+    # Template match TODO
+    # determine value for update f input TODO
+
+
+
+
     # All outputs are batches tensors.
     # Convert to numpy arrays, and take index [0] to remove the batch dimension.
     # We're only interested in the first num_detections.
@@ -246,6 +253,7 @@ def detect(image, from_file=True):
     print('Done')
     return FrameDetection(image_np_with_detections, detections['detection_boxes'], detections['detection_classes'],
                           detections['detection_scores'])
+    #add process covariance tuple to return tuple
 
 def pipeline(boxes, image):
     '''
@@ -336,6 +344,7 @@ def pipeline(boxes, image):
             tracker_list.append(tmp_trk)
             x_box.append(xx)
             print("END UNMATCHED DETECTIONS")
+
 
     # Deal with unmatched tracks
     if len(unmatched_trks) > 0:
