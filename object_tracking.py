@@ -33,6 +33,8 @@ for gpu in gpus:
 cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
 THRESHOLD = 0.8
 
+
+
 # What model to download.
 # Models can bee found here: https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md
 # http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8.tar.gz
