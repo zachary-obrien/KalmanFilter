@@ -58,6 +58,9 @@ max_age = 4  # no.of consecutive unmatched detection before
 
 min_hits = 1  # no. of consecutive matches needed to establish a track
 
+# reads the .png file into a cv2 image
+TEMPLATE_IMAGE = cv2.imread(template_matching.TEMPLATE_FILE_PNG, cv2.IMREAD_COLOR)
+
 frame_count = 0
 
 tracker_list = []  # list for trackers
@@ -273,11 +276,8 @@ def pipeline(boxes, image, max_val, max_loc):
     global track_id_list
     global debug
 
-    # reads the .png file into a cv2 image
-    template_img = cv2.imread(template_matching.TEMPLATE_FILE_PNG, cv2.IMREAD_COLOR)
-
     # sets template match box dimensions based on size of template image
-    template_bb_x, template_bb_y = max_loc[0] + template_img.shape[0], max_loc[1] + template_img.shape[1]
+    template_bb_x, template_bb_y = max_loc[0] + TEMPLATE_IMAGE.shape[0], max_loc[1] + TEMPLATE_IMAGE.shape[1]
 
     # draws boxes on image
     cv2.rectangle(image, max_loc, (template_bb_x, template_bb_y), (0, 255, 0), 1, 8, 0)
