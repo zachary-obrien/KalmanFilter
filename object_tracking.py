@@ -260,7 +260,7 @@ def detect(image, from_file=True):
     print('Done')
     frame_detect_object = FrameDetection(image_np_with_detections, detections['detection_boxes'],
                                          detections['detection_classes'], detections['detection_scores'])
-    # frame_detect_object.set_max_val_and_loc(max_val, max_loc)
+    frame_detect_object.set_max_val_and_loc(max_val, max_loc)
 
     return frame_detect_object
 
@@ -400,7 +400,7 @@ def pipeline(boxes, image, max_val, max_loc):
             if debug:
                 print('updated box: ', x_cv2)
                 print()
-            img = helpers.draw_box_label(img, x_cv2)  # Draw the bounding boxes on the
+            #img = helpers.draw_box_label(img, x_cv2)  # Draw the bounding boxes on the
             # img = helpers.draw_box_label(image, x_cv2)
             # images
     # Book keeping
