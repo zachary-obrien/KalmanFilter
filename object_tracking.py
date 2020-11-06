@@ -32,7 +32,7 @@ for gpu in gpus:
 # https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2.md
 # cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
 # cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
-THRESHOLD = 0.8
+THRESHOLD = 0.90
 
 # What model to download.
 # Models can bee found here: https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md
@@ -53,7 +53,7 @@ PATH_TO_LABELS = os.path.join('C:/Users/Cooper/Documents/Tensorflow/models/resea
 # Number of classes to detect
 NUM_CLASSES = 90
 
-max_age = 4  # no.of consecutive unmatched detection before
+max_age = 50  # no.of consecutive unmatched detection before
 # a track is deleted
 
 min_hits = 1  # no. of consecutive matches needed to establish a track
@@ -65,7 +65,8 @@ frame_count = 0
 
 tracker_list = []  # list for trackers
 # list for track ID
-track_id_list = deque(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'])
+track_id_list = deque(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'O', 'Q', 'R', 'S', 'T', 'U', 'V',
+                       'W', 'X', 'Y', 'Z'])
 
 debug = False
 # debug =  True
@@ -219,7 +220,8 @@ def detect(image, from_file=True):
     result = template_matching.get_template_match_positions(image, template_matching.TEMPLATE_FILE_NPY,
                                                             template_matching.BEST_MATCH_METHOD[0])
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result, None)
-    print('max value and coord location: ', max_val, max_loc)
+
+    # print('max value and coord location: ', max_val, max_loc)
 
     # determine value for update f input TODO
 
@@ -244,7 +246,7 @@ def detect(image, from_file=True):
         category_index,
         use_normalized_coordinates=True,
         max_boxes_to_draw=200,
-        min_score_thresh=.70,
+        min_score_thresh=.90,
         agnostic_mode=False)
 
     # print(detections['detection_boxes'])
@@ -258,7 +260,7 @@ def detect(image, from_file=True):
     print('Done')
     frame_detect_object = FrameDetection(image_np_with_detections, detections['detection_boxes'],
                                          detections['detection_classes'], detections['detection_scores'])
-    frame_detect_object.set_max_val_and_loc(max_val, max_loc)
+    # frame_detect_object.set_max_val_and_loc(max_val, max_loc)
 
     return frame_detect_object
 
@@ -276,11 +278,12 @@ def pipeline(boxes, image, max_val, max_loc):
     global track_id_list
     global debug
 
-    # sets template match box dimensions based on size of template image
-    template_bb_x, template_bb_y = max_loc[0] + TEMPLATE_IMAGE.shape[0], max_loc[1] + TEMPLATE_IMAGE.shape[1]
+    if max_val > .89:
+        # sets template match box dimensions based on size of template image
+        template_bb_x, template_bb_y = max_loc[0] + TEMPLATE_IMAGE.shape[0], max_loc[1] + TEMPLATE_IMAGE.shape[1]
 
-    # draws boxes on image
-    cv2.rectangle(image, max_loc, (template_bb_x, template_bb_y), (0, 255, 0), 1, 8, 0)
+        # draws boxes on image
+        cv2.rectangle(image, max_loc, (template_bb_x, template_bb_y), (0, 255, 0), 1, 8, 0)
 
     frame_count += 1
 
@@ -319,6 +322,10 @@ def pipeline(boxes, image, max_val, max_loc):
             z = z_box[det_idx]
             z = np.expand_dims(z, axis=0).T
             tmp_trk = tracker_list[trk_idx]
+
+            # updates process covariance based on max_val of template match
+            tmp_trk.update_F(max_val)
+
             tmp_trk.kalman_filter(z)
             xx = tmp_trk.x_state.T[0].tolist()
             xx = [xx[0], xx[2], xx[4], xx[6]]
@@ -349,6 +356,10 @@ def pipeline(boxes, image, max_val, max_loc):
             # print("trouble x")
             # print(x)
             # print("end trouble x")
+
+            # updates process covariance based on max_val of template match
+            tmp_trk.update_F(max_val)
+
             tmp_trk.x_state = x
             tmp_trk.predict_only()
             xx = tmp_trk.x_state
@@ -365,11 +376,18 @@ def pipeline(boxes, image, max_val, max_loc):
     if len(unmatched_trks) > 0:
         for trk_idx in unmatched_trks:
             tmp_trk = tracker_list[trk_idx]
+
+            # updates process covariance based on max_val of template match
+            tmp_trk.update_F(max_val)
+
             tmp_trk.no_losses += 1
             tmp_trk.predict_only()
             xx = tmp_trk.x_state
+            # print('predict only state', xx)
             xx = xx.T[0].tolist()
+            # print('predict only state transposed', xx)
             xx = [xx[0], xx[2], xx[4], xx[6]]
+            # print('predict only state0246', xx)
             tmp_trk.box = xx
             x_box[trk_idx] = xx
 
@@ -382,7 +400,7 @@ def pipeline(boxes, image, max_val, max_loc):
             if debug:
                 print('updated box: ', x_cv2)
                 print()
-            # img = helpers.draw_box_label(img, x_cv2) # Draw the bounding boxes on the
+            img = helpers.draw_box_label(img, x_cv2)  # Draw the bounding boxes on the
             # img = helpers.draw_box_label(image, x_cv2)
             # images
     # Book keeping
@@ -402,6 +420,7 @@ def pipeline(boxes, image, max_val, max_loc):
 
 def run_flow():
     cap = cv2.VideoCapture('singleball.mov')
+    # cap = cv2.VideoCapture('test_three_ball_video_crop.mp4')
     frame_number = 0
     while cap.isOpened():
         ret, frame = cap.read()
@@ -409,7 +428,7 @@ def run_flow():
             print('frame: ', frame_number)
             frame_number += 1
             frame_detection = detect(frame, from_file=False)
-            frame_detection.trim_by_score_threshold(0.8)
+            frame_detection.trim_by_score_threshold(THRESHOLD)
             labeled_output = pipeline(frame_detection.get_boxes(), frame_detection.get_image(),
                                       frame_detection.get_max_value(), frame_detection.get_max_location())
             cv2.imshow('frame', labeled_output)

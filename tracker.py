@@ -61,7 +61,7 @@ class Tracker():  # class for Kalman Filter-based tracker
         self.R = np.diag(R_diag_array)
 
     def update_F(self, ccor_value):
-        error_val = (1 - (ccor_value / 10.0))
+        error_val = (1 - ccor_value)
         self.F = np.array([[error_val, self.dt, 0, 0, 0, 0, 0, 0],
                            [0, error_val, 0, 0, 0, 0, 0, 0],
                            [0, 0, error_val, self.dt, 0, 0, 0, 0],
