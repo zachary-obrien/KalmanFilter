@@ -32,7 +32,7 @@ for gpu in gpus:
 # https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2.md
 # cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
 # cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
-THRESHOLD = 0.90
+THRESHOLD = 0.70
 
 # What model to download.
 # Models can bee found here: https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md
@@ -53,10 +53,12 @@ PATH_TO_LABELS = os.path.join('C:/Users/Cooper/Documents/Tensorflow/models/resea
 # Number of classes to detect
 NUM_CLASSES = 90
 
-max_age = 50  # no.of consecutive unmatched detection before
-# a track is deleted
 
-min_hits = 1  # no. of consecutive matches needed to establish a track
+# no.of consecutive unmatched detection before a track is deleted
+max_age = 4
+
+# no. of consecutive matches needed to establish a track
+min_hits = 1
 
 # reads the .png file into a cv2 image
 TEMPLATE_IMAGE = cv2.imread(template_matching.TEMPLATE_FILE_PNG, cv2.IMREAD_COLOR)
@@ -217,9 +219,9 @@ def detect(image, from_file=True):
     detections = detect_fn(input_tensor)
 
     # Template match video frame with template image to get cv2.TM_CCORR_NORMED value matrix
-    result = template_matching.get_template_match_positions(image, template_matching.TEMPLATE_FILE_NPY,
-                                                            template_matching.BEST_MATCH_METHOD[0])
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result, None)
+    # result = template_matching.get_template_match_positions(image, template_matching.TEMPLATE_FILE_NPY,
+    #                                                        template_matching.BEST_MATCH_METHOD[0])
+    # min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result, None)
 
     # print('max value and coord location: ', max_val, max_loc)
 
@@ -246,7 +248,7 @@ def detect(image, from_file=True):
         category_index,
         use_normalized_coordinates=True,
         max_boxes_to_draw=200,
-        min_score_thresh=.90,
+        min_score_thresh=.70,
         agnostic_mode=False)
 
     # print(detections['detection_boxes'])
@@ -260,7 +262,7 @@ def detect(image, from_file=True):
     print('Done')
     frame_detect_object = FrameDetection(image_np_with_detections, detections['detection_boxes'],
                                          detections['detection_classes'], detections['detection_scores'])
-    frame_detect_object.set_max_val_and_loc(max_val, max_loc)
+    # frame_detect_object.set_max_val_and_loc(max_val, max_loc)
 
     return frame_detect_object
 
@@ -333,13 +335,13 @@ def pipeline(boxes, image, max_val, max_loc):
             print(xx)
             tmp_trk.box = xx
             tmp_trk.hits += 1
-            print("NUM HITS:")
-            print(tmp_trk.hits)
+            print("NUM HITS:", tmp_trk.hits)
             # print(tmp_trk.location_history)
             # print(np.asarray([np.array(xx)]))
             # print("Now to concatenate")
             tmp_trk.location_history = np.concatenate((tmp_trk.location_history, np.asarray([np.array(xx)])))
             # print(np.array(xx))
+            print('Location History:')
             print(tmp_trk.location_history)
             tmp_trk.no_losses = 0
 
@@ -347,7 +349,7 @@ def pipeline(boxes, image, max_val, max_loc):
     if len(unmatched_dets) > 0:
         for idx in unmatched_dets:
             z = z_box[idx]
-            print("UNMATCHED DETECTIONS")
+            #print("UNMATCHED DETECTIONS")
             # print(z)
             z = np.expand_dims(z, axis=0).T
             # print(z)
@@ -366,11 +368,11 @@ def pipeline(boxes, image, max_val, max_loc):
             xx = xx.T[0].tolist()
             xx = [xx[0], xx[2], xx[4], xx[6]]
             tmp_trk.box = xx
-            print(track_id_list)
+            # print(track_id_list)
             tmp_trk.id = track_id_list.popleft()  # assign an ID for the tracker
             tracker_list.append(tmp_trk)
             x_box.append(xx)
-            print("END UNMATCHED DETECTIONS")
+            #print("END UNMATCHED DETECTIONS")
 
     # Deal with unmatched tracks
     if len(unmatched_trks) > 0:
@@ -419,8 +421,8 @@ def pipeline(boxes, image, max_val, max_loc):
 
 
 def run_flow():
-    cap = cv2.VideoCapture('singleball.mov')
-    # cap = cv2.VideoCapture('test_three_ball_video_crop.mp4')
+    #cap = cv2.VideoCapture('singleball.mov')
+    cap = cv2.VideoCapture('test_three_ball_video_crop.mp4')
     frame_number = 0
     while cap.isOpened():
         ret, frame = cap.read()
