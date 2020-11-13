@@ -378,11 +378,11 @@ def pipeline(boxes, dims):
             xx = xx.T[0].tolist()
             xx =[xx[0], xx[2], xx[4], xx[6]]
             tmp_trk.box = xx
-            print(track_id_list)
+            #print(track_id_list)
             tmp_trk.id = track_id_list.popleft() # assign an ID for the tracker
             tracker_list.append(tmp_trk)
             x_box.append(xx)
-            print("END UNMATCHED DETECTIONS")
+            #print("END UNMATCHED DETECTIONS")
     
     # Deal with unmatched tracks       
     if len(unmatched_trks)>0:

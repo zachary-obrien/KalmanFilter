@@ -30,14 +30,15 @@ for gpu in gpus:
 
 #https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2.md
 cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
-cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
+#cap = cv2.VideoCapture(0)  # Change only if you have more than one webcams
 THRESHOLD = 0.8
 
 # What model to download.
-# Models can bee found here: https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md
+# Models can bee found here: https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md
 # http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8.tar.gz
+# http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8.tar.gz
 # MODEL_NAME = 'mask_rcnn_inception_resnet_v2_1024x1024_coco17_gpu-8'
-MODEL_NAME = 'faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8'
+MODEL_NAME = 'faster_rcnn_resnet101_v1_640x640_coco17_tpu-8'
 MODEL_FILE = MODEL_NAME + '.tar.gz'
 DOWNLOAD_BASE = 'http://download.tensorflow.org/models/object_detection/tf2/20200711/'
 
@@ -51,7 +52,7 @@ PATH_TO_LABELS = os.path.join('/home/zac/models/research/object_detection/data/'
 # Number of classes to detect
 NUM_CLASSES = 90
 
-max_age = 4  # no.of consecutive unmatched detection before
+max_age = 1  # no.of consecutive unmatched detection before
              # a track is deleted
 
 min_hits =1  # no. of consecutive matches needed to establish a track
@@ -68,6 +69,10 @@ debug =  False
 print("defined variables")
 # Download Model
 model_location = MODEL_NAME + "/saved_model"
+
+#temp to test tflite conversion
+model_location = "/content/fine_tuned_model/saved_model"
+#end
 if not os.path.isdir(MODEL_NAME):
     opener = urllib.request.URLopener()
     opener.retrieve(DOWNLOAD_BASE + MODEL_FILE, MODEL_FILE)
@@ -85,10 +90,10 @@ print('Loading model... ', end='')
 start_time = time.time()
 
 detect_fn = keras.models.load_model(model_location)
-print(type(detect_fn))
+#print(type(detect_fn))
 end_time = time.time()
 elapsed_time = end_time - start_time
-print('Done! Took {} seconds'.format(elapsed_time))
+#print('Done! Took {} seconds'.format(elapsed_time))
 
 IMAGE_FOLDER = "ball_images/"
 
@@ -243,7 +248,7 @@ def detect(image, from_file=True):
 
     # plt.figure()
     # plt.imshow(image_np_with_detections)
-    print('Done')
+    #print('Done')
     return FrameDetection(image_np_with_detections, detections['detection_boxes'], detections['detection_classes'],
                           detections['detection_scores'])
 
@@ -302,21 +307,21 @@ def pipeline(boxes, image):
             print(xx)
             tmp_trk.box = xx
             tmp_trk.hits += 1
-            print("NUM HITS:")
-            print(tmp_trk.hits)
+            print("NUM HITS:" + str(tmp_trk.hits))
+            # print(tmp_trk.hits)
             # print(tmp_trk.location_history)
             # print(np.asarray([np.array(xx)]))
             # print("Now to concatenate")
             tmp_trk.location_history = np.concatenate((tmp_trk.location_history, np.asarray([np.array(xx)])))
             # print(np.array(xx))
-            print(tmp_trk.location_history)
+            #print(tmp_trk.location_history)
             tmp_trk.no_losses = 0
 
     # Deal with unmatched detections
     if len(unmatched_dets) > 0:
         for idx in unmatched_dets:
             z = z_box[idx]
-            print("UNMATCHED DETECTINOS")
+            #print("UNMATCHED DETECTINOS")
             # print(z)
             z = np.expand_dims(z, axis=0).T
             # print(z)
@@ -331,11 +336,11 @@ def pipeline(boxes, image):
             xx = xx.T[0].tolist()
             xx = [xx[0], xx[2], xx[4], xx[6]]
             tmp_trk.box = xx
-            print(track_id_list)
+            #print(track_id_list)
             tmp_trk.id = track_id_list.popleft()  # assign an ID for the tracker
             tracker_list.append(tmp_trk)
             x_box.append(xx)
-            print("END UNMATCHED DETECTIONS")
+            #print("END UNMATCHED DETECTIONS")
 
     # Deal with unmatched tracks
     if len(unmatched_trks) > 0:
