@@ -1,6 +1,7 @@
 # KalmanFilter
 
 ## Installation Instructions
+This application processes video and estimates the velocity of the object detected by the Nerual Network. While the current demo is of a ball moving, the model is relaceable with whatever detection model you'd like.
 
 ### Apt-get Installs
 ```
